@@ -1,0 +1,20 @@
+{
+  "name": "g2-congresos-backend",
+  "version": "1.0.0",
+  "description": "Backend de la app de congresos de G2 Consultora — API pública (config por congreso, validación de credencial digital) y panel de administración (branding, herramientas, notificaciones, info, carga de listado por Excel).",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "keywords": ["g2", "congresos", "eventos", "acreditacion"],
+  "author": "G2 Consultora",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^5.2.1",
+    "multer": "^2.2.0",
+    "xlsx": "^0.18.5"
+  }
+}
