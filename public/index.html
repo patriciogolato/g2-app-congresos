@@ -21,8 +21,11 @@
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
 html{scroll-behavior:smooth;}
 body{
-  font-family:'Inter',sans-serif; background:var(--cream2); color:var(--text);
+  font-family:'Inter',sans-serif; color:var(--text);
   min-height:100vh; display:flex; justify-content:center; -webkit-font-smoothing:antialiased;
+  background:
+    radial-gradient(circle at 1px 1px, rgba(22,53,77,.07) 1px, transparent 0) 0 0/22px 22px,
+    var(--cream2);
 }
 h1,h2,h3{font-family:'Playfair Display',serif;}
 .mono{font-family:'IBM Plex Mono',monospace;}
@@ -39,10 +42,21 @@ svg{display:block;}
 }
 
 .topbar{
-  background:var(--navy); color:var(--white); padding:18px 20px 20px; position:relative; flex-shrink:0;
+  background:linear-gradient(135deg, var(--navy) 0%, var(--navy2) 65%, #2c2450 130%);
+  color:var(--white); padding:18px 20px 20px; position:relative; flex-shrink:0; overflow:hidden;
   border-bottom:2px solid var(--grape);
 }
-.topbar-row{display:flex; align-items:center; gap:12px;}
+.topbar::before{
+  content:""; position:absolute; inset:0; opacity:.5; pointer-events:none;
+  background-image: radial-gradient(circle at 1px 1px, rgba(255,255,255,.16) 1px, transparent 0);
+  background-size: 16px 16px;
+}
+.topbar::after{
+  content:""; position:absolute; width:180px; height:180px; border-radius:50%; pointer-events:none;
+  background: radial-gradient(circle, var(--grape) 0%, transparent 70%); opacity:.35;
+  top:-90px; right:-60px;
+}
+.topbar-row{display:flex; align-items:center; gap:12px; position:relative; z-index:1;}
 .topbar-row img{height:30px; object-fit:contain;}
 .logo-fallback{
   font-family:'IBM Plex Mono',monospace; font-size:11px; letter-spacing:.05em;
@@ -51,7 +65,7 @@ svg{display:block;}
 .topbar-title{flex:1; min-width:0;}
 .topbar-title .sig{font-family:'IBM Plex Mono',monospace; font-size:10.5px; letter-spacing:.1em; text-transform:uppercase; color:var(--grape); font-weight:500;}
 .topbar-title h1{font-size:16.5px; font-weight:700; line-height:1.25; margin-top:3px; font-family:'Inter',sans-serif;}
-.topbar-meta{margin-top:12px; font-size:12px; color:rgba(255,255,255,.72); display:flex; gap:16px; flex-wrap:wrap;}
+.topbar-meta{margin-top:12px; font-size:12px; color:rgba(255,255,255,.72); display:flex; gap:16px; flex-wrap:wrap; position:relative; z-index:1;}
 .topbar-meta span{display:inline-flex; align-items:center; gap:5px;}
 .topbar-meta .icon-svg{width:13px;height:13px;opacity:.85;}
 .install-btn{
@@ -67,27 +81,49 @@ svg{display:block;}
 
 .section-label{font-family:'IBM Plex Mono',monospace; font-size:10.5px; text-transform:uppercase; letter-spacing:.1em; color:var(--muted); font-weight:500; margin:20px 0 10px; display:flex; align-items:center; gap:8px;}
 .section-label:first-child{margin-top:0;}
+.section-label::before{content:""; width:6px; height:6px; border-radius:50%; background:var(--grape); flex-shrink:0;}
 .section-label::after{content:""; flex:1; height:1px; background:var(--line);}
 
 .tools-grid{display:grid; grid-template-columns:1fr 1fr; gap:10px;}
 .tool-card{
   background:var(--white); border-radius:var(--radius); padding:14px; cursor:pointer; transition:var(--tr);
-  border:1px solid var(--line); position:relative;
+  border:1px solid var(--line); position:relative; overflow:hidden;
 }
-.tool-card:hover{border-color:var(--navy);}
-.tool-card.featured{grid-column:1 / -1; display:flex; align-items:center; gap:14px; border-color:var(--navy);}
-.tool-card.featured .icon-badge{margin-bottom:0; width:40px; height:40px; padding:9px; flex-shrink:0;}
+.tool-card::before{
+  content:""; position:absolute; top:0; left:0; right:0; height:3px; transform:scaleX(0); transform-origin:left;
+  background:var(--grape); transition:var(--tr);
+}
+.tool-card:hover{border-color:var(--navy); box-shadow:0 6px 16px rgba(22,53,77,.1);}
+.tool-card:hover::before{transform:scaleX(1);}
+.tool-card.featured{grid-column:1 / -1; display:flex; align-items:center; gap:14px; border-color:var(--navy); background:linear-gradient(120deg, var(--navy) 0%, var(--navy2) 100%); color:#fff;}
+.tool-card.featured h3{color:#fff;}
+.tool-card.featured p{color:rgba(255,255,255,.68);}
+.tool-card.featured .icon-badge{margin-bottom:0; width:40px; height:40px; padding:9px; flex-shrink:0; background:rgba(255,255,255,.14); border-color:rgba(255,255,255,.25); color:#fff;}
+.tool-card.featured::before{display:none;}
 .icon-badge{
   width:32px; height:32px; border:1px solid var(--line); border-radius:8px; color:var(--navy);
   display:flex; align-items:center; justify-content:center; margin-bottom:12px; padding:7px;
+  background:rgba(22,53,77,.05);
 }
+.icon-badge.tint-grape{ background:rgba(171,146,191,.16); color:var(--grape2); border-color:rgba(171,146,191,.35); }
 .tool-card h3{font-size:13.5px; color:var(--navy); font-weight:600; margin-bottom:4px; font-family:'Inter',sans-serif;}
 .tool-card p{font-size:11px; color:var(--muted); line-height:1.4;}
 
 .hero-card{
-  background:var(--white); border-radius:var(--radius); padding:18px; margin-bottom:4px;
-  border:1px solid var(--line);
+  background:var(--white); border-radius:var(--radius); margin-bottom:4px;
+  border:1px solid var(--line); overflow:hidden;
 }
+.hero-banner{
+  height:88px; position:relative; overflow:hidden;
+  background:linear-gradient(120deg, var(--navy) 0%, var(--grape2) 100%);
+}
+.hero-banner img{width:100%;height:100%;object-fit:cover;display:block;}
+.hero-banner::after{
+  content:""; position:absolute; inset:0;
+  background-image: radial-gradient(circle at 1px 1px, rgba(255,255,255,.22) 1px, transparent 0);
+  background-size:14px 14px;
+}
+.hero-body{padding:16px 18px 18px;}
 .hero-card .logos{display:flex; gap:16px; align-items:center; margin-bottom:14px; flex-wrap:wrap;}
 .hero-card .logos img{height:22px; object-fit:contain;}
 .hero-card .logos .logo-fallback{color:var(--navy); border-color:var(--line);}
@@ -145,9 +181,11 @@ svg{display:block;}
 }
 .field input:focus{outline:none; border-color:var(--grape);}
 .btn-primary{
-  background:var(--navy); color:#fff; border:none; border-radius:7px; padding:12px; font-size:13px;
+  background:linear-gradient(120deg, var(--navy) 0%, var(--navy2) 100%); color:#fff; border:none; border-radius:7px; padding:12px; font-size:13px;
   font-weight:600; cursor:pointer; font-family:'Inter',sans-serif; width:100%; margin-top:12px;
+  box-shadow:0 4px 12px rgba(22,53,77,.22); transition:var(--tr);
 }
+.btn-primary:not(:disabled):hover{box-shadow:0 6px 16px rgba(22,53,77,.3); transform:translateY(-1px);}
 .btn-primary:disabled{opacity:.5; cursor:default;}
 
 nav.bottomnav{
@@ -161,7 +199,9 @@ nav.bottomnav button{
 }
 nav.bottomnav button .ic{width:19px; height:19px;}
 nav.bottomnav button .lb{font-size:9.5px; font-weight:500; letter-spacing:.03em; text-transform:uppercase;}
+nav.bottomnav button .ic{border-radius:8px; padding:3px; transition:var(--tr);}
 nav.bottomnav button.active{color:var(--navy); position:relative;}
+nav.bottomnav button.active .ic{background:rgba(171,146,191,.18); color:var(--grape2);}
 nav.bottomnav button.active::before{content:"";position:absolute;top:0;left:50%;transform:translateX(-50%);width:16px;height:2px;background:var(--grape);}
 
 #loadingScreen{position:fixed; inset:0; background:var(--cream); display:flex; align-items:center; justify-content:center; z-index:100; flex-direction:column; gap:10px;}
@@ -196,10 +236,13 @@ nav.bottomnav button.active::before{content:"";position:absolute;top:0;left:50%;
 
   <div class="screen active" id="screen-home">
     <div class="hero-card">
-      <div class="logos" id="orgLogos"></div>
-      <h2 id="heroNombre"></h2>
-      <span class="chip" data-ic="calendar"><span id="chipFechas"></span></span>
-      <span class="chip" data-ic="pin"><span id="chipSede"></span></span>
+      <div class="hero-banner" id="heroBanner"></div>
+      <div class="hero-body">
+        <div class="logos" id="orgLogos"></div>
+        <h2 id="heroNombre"></h2>
+        <span class="chip" data-ic="calendar"><span id="chipFechas"></span></span>
+        <span class="chip" data-ic="pin"><span id="chipSede"></span></span>
+      </div>
     </div>
 
     <div class="section-label">Herramientas</div>
@@ -299,9 +342,16 @@ function renderAll(){
   document.getElementById("orgLogos").innerHTML = (CONFIG.logosOrganizadores || []).map(u => `<img src="${u}" onerror="this.replaceWith(Object.assign(document.createElement('span'),{className:'logo-fallback mono',textContent:'LOGO'}))">`).join("");
   document.getElementById("homeNote").textContent = `Contenido cargado en vivo desde el panel de administración — congreso: ${CONGRESO_ID}.`;
 
-  document.getElementById("toolsGrid").innerHTML = (CONFIG.herramientas || []).map(t => `
+  const banner = document.getElementById("heroBanner");
+  if (CONFIG.imagenPortada) {
+    banner.innerHTML = `<img src="${CONFIG.imagenPortada}" onerror="this.remove()">`;
+  } else {
+    banner.innerHTML = "";
+  }
+
+  document.getElementById("toolsGrid").innerHTML = (CONFIG.herramientas || []).map((t, i) => `
     <div class="tool-card ${t.destacado ? "featured" : ""}" onclick="openTool('${t.id}')">
-      <div class="icon-badge icon-svg">${ICONS[t.icono] || ""}</div>
+      <div class="icon-badge icon-svg ${!t.destacado && i % 2 ? "tint-grape" : ""}">${ICONS[t.icono] || ""}</div>
       <div>
         <h3>${t.titulo}</h3>
         <p>${t.descripcion}</p>
