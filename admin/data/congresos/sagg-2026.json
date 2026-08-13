@@ -1,0 +1,72 @@
+{
+  "id": "sagg-2026",
+  "sigla": "SAGG 2026",
+  "nombre": "XXII Congreso Argentino de Gerontología y Geriatría",
+  "fechas": "27 y 28 de agosto de 2026",
+  "sede": "Mar del Plata, Buenos Aires",
+  "logo": "https://www.g2consultora.com/wp-content/uploads/2026/06/logo-congreso.png",
+  "logosOrganizadores": [
+    "https://www.g2consultora.com/wp-content/uploads/2026/07/logo-iagg.png",
+    "https://www.g2consultora.com/wp-content/uploads/2026/07/logo-sagg.png"
+  ],
+  "herramientas": [
+    {
+      "id": "credencial", "icono": "idcard", "titulo": "Credencial Digital",
+      "descripcion": "Validá tu DNI y generá tu QR de acceso",
+      "modo": "credencial", "destacado": true
+    },
+    {
+      "id": "programa", "icono": "doc", "titulo": "Programa Científico",
+      "descripcion": "Cronograma sincronizado en vivo (Google Sheets)",
+      "modo": "embed",
+      "url": "https://www.g2consultora.com/wp-content/uploads/2026/06/Cronograma%20SAGG.html"
+    },
+    {
+      "id": "plano", "icono": "map", "titulo": "Plano de Salones",
+      "descripcion": "Ubicá las salas del predio",
+      "modo": "imagen",
+      "url": "https://www.g2consultora.com/wp-content/uploads/2026/06/plano-sagg-2026.png"
+    },
+    {
+      "id": "notificaciones", "icono": "bell", "titulo": "Notificaciones",
+      "descripcion": "Avisos y cambios de último momento",
+      "modo": "nativo", "target": "notif"
+    },
+    {
+      "id": "info", "icono": "info", "titulo": "Información General",
+      "descripcion": "Sede, contacto y datos útiles",
+      "modo": "nativo", "target": "info"
+    },
+    {
+      "id": "encuestas", "icono": "chart", "titulo": "Participá",
+      "descripcion": "Votaciones y encuestas en vivo",
+      "modo": "nativo-overlay"
+    }
+  ],
+  "notificacionesDemo": [
+    { "titulo": "¡Bienvenidos al Congreso!", "cuerpo": "La acreditación abre desde las 8:00 hs en el hall principal.", "fecha": "27/8 · 07:30" },
+    { "titulo": "Cambio de sala", "cuerpo": "El taller “Fragilidad y Autonomía” se traslada a Sala B.", "fecha": "27/8 · 10:15" },
+    { "titulo": "Actividad patrocinada", "cuerpo": "No te pierdas el simposio de las 16:00 en el Auditorio Principal.", "fecha": "27/8 · 14:00" }
+  ],
+  "info": [
+    { "k": "Sede", "v": "Centro de Convenciones, Mar del Plata" },
+    { "k": "Fechas", "v": "27 y 28 de agosto de 2026" },
+    { "k": "Contacto", "v": "informes@g2consultora.com", "link": "mailto:informes@g2consultora.com" },
+    { "k": "Web", "v": "www.g2consultora.com", "link": "https://www.g2consultora.com" },
+    { "k": "Organiza", "v": "G2 Consultora" }
+  ],
+  "encuestaDemo": {
+    "pregunta": "¿Qué eje temático te interesa más para el próximo congreso?",
+    "opciones": [
+      { "texto": "Fragilidad y autonomía", "votos": 38 },
+      { "texto": "Deterioro cognitivo", "votos": 27 },
+      { "texto": "Cuidados paliativos", "votos": 19 },
+      { "texto": "Políticas públicas de vejez", "votos": 11 }
+    ]
+  },
+  "roster": [
+    { "dni": "30111222", "nombre": "María Fernández", "categoria": "Socio SAGG", "habilitado": true },
+    { "dni": "28555444", "nombre": "Carlos Gómez", "categoria": "No Socio", "habilitado": true },
+    { "dni": "35999888", "nombre": "Lucía Pereyra", "categoria": "Estudiante de grado", "habilitado": false }
+  ]
+}
