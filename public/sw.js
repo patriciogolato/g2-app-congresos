@@ -1,10 +1,11 @@
-/* Service worker mínimo — cachea el shell de la app para que abra
-   rápido y funcione offline (excepto herramientas embebidas, que
-   necesitan conexión ya que muestran contenido en vivo). */
+/* Service worker — cachea solo assets estáticos (íconos, manifest) para
+   que la app instale rápido. La página principal y todo lo que viene de
+   la API SIEMPRE se pide en red primero, para que nadie quede viendo
+   una versión vieja cacheada. Si no hay conexión, recién ahí usa la
+   última copia guardada. */
 
-const CACHE = "g2app-acreditacion-shell-v1";
+const CACHE = "g2app-shell-v2";
 const SHELL = [
-  "./index.html",
   "./manifest.json",
   "./icons/icon-192.png",
   "./icons/icon-512.png"
@@ -25,10 +26,28 @@ self.addEventListener("activate", (e) => {
 });
 
 self.addEventListener("fetch", (e) => {
-  if (e.request.mode !== "navigate" && !SHELL.some((s) => e.request.url.endsWith(s.replace("./", "")))) {
+  const req = e.request;
+
+  // Nunca cachear la API: siempre en vivo.
+  if (req.url.includes("/api/")) return;
+
+  // Página principal (navegación) y el propio index.html: red primero,
+  // caché solo como respaldo si no hay conexión.
+  if (req.mode === "navigate" || req.url.endsWith("/index.html") || req.url.endsWith("/")) {
+    e.respondWith(
+      fetch(req)
+        .then((res) => {
+          const copy = res.clone();
+          caches.open(CACHE).then((c) => c.put(req, copy));
+          return res;
+        })
+        .catch(() => caches.match(req))
+    );
     return;
   }
-  e.respondWith(
-    caches.match(e.request).then((cached) => cached || fetch(e.request))
-  );
+
+  // Assets estáticos (íconos, manifest): caché primero, más rápido.
+  if (SHELL.some((s) => req.url.endsWith(s.replace("./", "")))) {
+    e.respondWith(caches.match(req).then((cached) => cached || fetch(req)));
+  }
 });
