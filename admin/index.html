@@ -109,8 +109,6 @@ table.roster td{padding:6px 8px; border-bottom:1px solid var(--cream2);}
     <div class="field"><label>Nombre completo del congreso</label><input id="f_nombre" placeholder="XXII Congreso Argentino de..."></div>
     <div class="field"><label>Sede</label><input id="f_sede" placeholder="Mar del Plata, Buenos Aires"></div>
     <div class="field"><label>Logo principal (URL)</label><input id="f_logo" placeholder="https://.../logo-congreso.png"></div>
-    <div class="field"><label>Imagen de portada (opcional)</label><input id="f_portada" placeholder="https://.../foto-o-banner-del-congreso.jpg"></div>
-    <p class="hint">Si la dejás vacía, la app muestra un banner con gradiente de marca en su lugar.</p>
     <div class="field">
       <label>Logos de organizadores (uno por línea)</label>
       <textarea id="f_logosOrg" placeholder="https://.../logo-iagg.png&#10;https://.../logo-sagg.png"></textarea>
@@ -243,7 +241,6 @@ async function cargarCongreso(id){
     document.getElementById("f_fechas").value = c.fechas || "";
     document.getElementById("f_sede").value = c.sede || "";
     document.getElementById("f_logo").value = c.logo || "";
-    document.getElementById("f_portada").value = c.imagenPortada || "";
     document.getElementById("f_logosOrg").value = (c.logosOrganizadores || []).join("\n");
     document.getElementById("f_herramientas").value = JSON.stringify(c.herramientas || [], null, 2);
 
@@ -355,7 +352,6 @@ async function guardarCongreso(){
     fechas: document.getElementById("f_fechas").value,
     sede: document.getElementById("f_sede").value,
     logo: document.getElementById("f_logo").value,
-    imagenPortada: document.getElementById("f_portada").value,
     logosOrganizadores: document.getElementById("f_logosOrg").value.split("\n").map(s => s.trim()).filter(Boolean),
     herramientas,
     notificacionesDemo,
