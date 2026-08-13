@@ -124,9 +124,9 @@ svg{display:block;}
   background-size:14px 14px;
 }
 .hero-body{padding:16px 18px 18px;}
-.hero-card .logos{display:flex; gap:16px; align-items:center; margin-bottom:14px; flex-wrap:wrap;}
-.hero-card .logos img{height:22px; object-fit:contain;}
-.hero-card .logos .logo-fallback{color:var(--navy); border-color:var(--line);}
+.logos{display:flex; gap:16px; align-items:center; flex-wrap:wrap;}
+.logos img{height:22px; object-fit:contain;}
+.logos .logo-fallback{color:var(--navy); border-color:var(--line);}
 .hero-card h2{font-size:16px; color:var(--navy); line-height:1.32; margin-bottom:10px; font-weight:700;}
 .chip{
   display:inline-flex; align-items:center; gap:6px; background:var(--cream); color:var(--navy);
@@ -235,16 +235,6 @@ nav.bottomnav button.active::before{content:"";position:absolute;top:0;left:50%;
   </div>
 
   <div class="screen active" id="screen-home">
-    <div class="hero-card">
-      <div class="hero-banner" id="heroBanner"></div>
-      <div class="hero-body">
-        <div class="logos" id="orgLogos"></div>
-        <h2 id="heroNombre"></h2>
-        <span class="chip" data-ic="calendar"><span id="chipFechas"></span></span>
-        <span class="chip" data-ic="pin"><span id="chipSede"></span></span>
-      </div>
-    </div>
-
     <div class="section-label">Herramientas</div>
     <div class="tools-grid" id="toolsGrid"></div>
 
@@ -260,6 +250,9 @@ nav.bottomnav button.active::before{content:"";position:absolute;top:0;left:50%;
   </div>
 
   <div class="screen" id="screen-info">
+    <div class="section-label">Organiza</div>
+    <div class="logos" id="orgLogos" style="margin-bottom:18px;"></div>
+
     <div class="section-label">Información general</div>
     <div id="infoList"></div>
     <div class="note-box" id="infoNote"></div>
@@ -336,18 +329,8 @@ function renderAll(){
   document.getElementById("topNombre").textContent = CONFIG.nombre || "";
   document.getElementById("topFechas").textContent = CONFIG.fechas || "";
   document.getElementById("topSede").textContent = CONFIG.sede || "";
-  document.getElementById("heroNombre").textContent = CONFIG.nombre || "";
-  document.getElementById("chipFechas").textContent = CONFIG.fechas || "";
-  document.getElementById("chipSede").textContent = CONFIG.sede || "";
   document.getElementById("orgLogos").innerHTML = (CONFIG.logosOrganizadores || []).map(u => `<img src="${u}" onerror="this.replaceWith(Object.assign(document.createElement('span'),{className:'logo-fallback mono',textContent:'LOGO'}))">`).join("");
   document.getElementById("homeNote").textContent = `Contenido cargado en vivo desde el panel de administración — congreso: ${CONGRESO_ID}.`;
-
-  const banner = document.getElementById("heroBanner");
-  if (CONFIG.imagenPortada) {
-    banner.innerHTML = `<img src="${CONFIG.imagenPortada}" onerror="this.remove()">`;
-  } else {
-    banner.innerHTML = "";
-  }
 
   document.getElementById("toolsGrid").innerHTML = (CONFIG.herramientas || []).map((t, i) => `
     <div class="tool-card ${t.destacado ? "featured" : ""}" onclick="openTool('${t.id}')">
