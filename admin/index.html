@@ -100,6 +100,14 @@ table.roster td{padding:6px 8px; border-bottom:1px solid var(--cream2);}
     </div>
   </header>
 
+  <div class="card" style="display:flex; align-items:center; gap:14px; padding:14px 20px;">
+    <div style="flex:1; min-width:0;">
+      <div style="font-family:'IBM Plex Mono',monospace; font-size:10px; text-transform:uppercase; letter-spacing:.04em; color:var(--muted); margin-bottom:4px;">Link para participantes</div>
+      <div id="participantLink" class="mono" style="font-size:13px; color:var(--navy); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">—</div>
+    </div>
+    <button class="btn small" onclick="copiarLink()">Copiar link</button>
+  </div>
+
   <div class="card">
     <h2>Branding</h2>
     <div class="grid2">
@@ -161,6 +169,21 @@ function showToast(msg, isErr){
   t.textContent = msg;
   t.className = "toast show" + (isErr ? " err" : "");
   setTimeout(() => t.classList.remove("show"), 3200);
+}
+
+function updateParticipantLink(id){
+  const url = `${location.origin}/?congreso=${encodeURIComponent(id)}`;
+  const el = document.getElementById("participantLink");
+  el.textContent = url;
+  el.dataset.url = url;
+}
+
+function copiarLink(){
+  const url = document.getElementById("participantLink").dataset.url;
+  if (!url) return;
+  navigator.clipboard.writeText(url)
+    .then(() => showToast("Link copiado"))
+    .catch(() => showToast("No se pudo copiar — copialo manualmente", true));
 }
 
 async function api(path, opts = {}){
@@ -232,6 +255,7 @@ async function cargarCongreso(id){
   if (!id) return;
   currentId = id;
   document.getElementById("subtitle").textContent = "congreso: " + id;
+  updateParticipantLink(id);
   try {
     const res = await api(`/api/admin/congresos/${encodeURIComponent(id)}`);
     if (!res.ok) throw new Error("no se pudo cargar");
