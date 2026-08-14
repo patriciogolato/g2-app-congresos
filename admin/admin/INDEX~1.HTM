@@ -1,0 +1,598 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>G2 · Panel de Administración</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --navy:#16354D; --navy2:#0F2339; --cream:#F3F7F0; --cream2:#E8EDE5;
+  --line:#D9E1DC; --grape:#AB92BF; --white:#FFFFFF; --text:#3C4448; --muted:#7C8A8B;
+  --ok:#2A6B41; --ok-bg:#E4F0E7; --err:#A6392F; --err-bg:#F6E4E2;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Inter',sans-serif; background:var(--cream2); color:var(--text); min-height:100vh;}
+.mono{font-family:'IBM Plex Mono',monospace;}
+
+/* login */
+#loginView{min-height:100vh; display:flex; align-items:center; justify-content:center; padding:20px;}
+.login-box{background:#fff; border:1px solid var(--line); border-radius:12px; padding:32px; width:100%; max-width:340px;}
+.login-box h1{font-size:16px; color:var(--navy); margin-bottom:4px;}
+.login-box p{font-size:12px; color:var(--muted); margin-bottom:20px;}
+
+/* shell */
+#panelView{display:none; max-width:820px; margin:0 auto; padding:24px 20px 80px;}
+header.top{display:flex; align-items:center; justify-content:space-between; margin-bottom:24px; flex-wrap:wrap; gap:12px;}
+header.top h1{font-size:18px; color:var(--navy);}
+header.top .sub{font-size:11px; color:var(--muted); font-family:'IBM Plex Mono',monospace; margin-top:2px;}
+.congreso-picker{display:flex; gap:8px; align-items:center;}
+
+.card{background:#fff; border:1px solid var(--line); border-radius:10px; padding:20px; margin-bottom:16px;}
+.card h2{font-size:13px; color:var(--navy); text-transform:uppercase; letter-spacing:.05em; font-family:'IBM Plex Mono',monospace; font-weight:500; margin-bottom:14px; display:flex; align-items:center; gap:8px;}
+.card h2::after{content:""; flex:1; height:1px; background:var(--line);}
+
+.grid2{display:grid; grid-template-columns:1fr 1fr; gap:12px;}
+.field{margin-bottom:12px;}
+.field label{font-family:'IBM Plex Mono',monospace; font-size:10px; text-transform:uppercase; letter-spacing:.04em; font-weight:500; color:var(--navy); display:block; margin-bottom:5px;}
+.field input, .field textarea, .field select{
+  width:100%; border:1px solid var(--line); background:var(--cream); border-radius:7px;
+  padding:9px 11px; font-size:13px; font-family:'Inter',sans-serif; color:var(--text);
+}
+.field textarea{font-family:'IBM Plex Mono',monospace; font-size:12px; min-height:90px; resize:vertical;}
+.field input:focus, .field textarea:focus, .field select:focus{outline:none; border-color:var(--grape);}
+.hint{font-size:11px; color:var(--muted); margin-top:-6px; margin-bottom:12px; line-height:1.4;}
+
+button{cursor:pointer; font-family:'Inter',sans-serif;}
+.btn{background:var(--navy); color:#fff; border:none; border-radius:7px; padding:10px 16px; font-size:12.5px; font-weight:600;}
+.btn.secondary{background:#fff; color:var(--navy); border:1px solid var(--line);}
+.btn.danger{background:#fff; color:var(--err); border:1px solid var(--err);}
+.btn.small{padding:6px 10px; font-size:11px;}
+.btn:disabled{opacity:.5; cursor:default;}
+
+.row-list .row{display:flex; gap:8px; align-items:flex-start; margin-bottom:8px; padding:10px; background:var(--cream); border:1px solid var(--line); border-radius:7px;}
+.row-list .row input{flex:1; min-width:0;}
+.row-list .row button{flex-shrink:0;}
+
+.toast{position:fixed; bottom:20px; left:50%; transform:translateX(-50%); background:var(--navy); color:#fff; padding:11px 18px; border-radius:8px; font-size:12.5px; display:none; z-index:200; box-shadow:0 6px 20px rgba(0,0,0,.2);}
+.toast.show{display:block;}
+.toast.err{background:var(--err);}
+
+.roster-count{font-size:12px; color:var(--navy); font-weight:600; margin-bottom:10px;}
+table.roster{width:100%; border-collapse:collapse; font-size:12px;}
+table.roster th{text-align:left; font-family:'IBM Plex Mono',monospace; font-size:10px; text-transform:uppercase; color:var(--muted); padding:6px 8px; border-bottom:1px solid var(--line);}
+table.roster td{padding:6px 8px; border-bottom:1px solid var(--cream2);}
+.pill{font-family:'IBM Plex Mono',monospace; font-size:9.5px; padding:2px 7px; border-radius:4px;}
+.pill.ok{background:var(--ok-bg); color:var(--ok);}
+.pill.no{background:var(--err-bg); color:var(--err);}
+
+.actions-bar{position:sticky; bottom:0; background:var(--cream2); padding:14px 0; margin-top:8px; display:flex; gap:10px; justify-content:flex-end; border-top:1px solid var(--line);}
+
+.herr-row{border:1px solid var(--line); border-radius:8px; padding:14px; margin-bottom:10px; background:var(--cream);}
+.herr-row .top-row{display:flex; justify-content:flex-end; margin-top:2px;}
+.check-line{display:flex; align-items:center; gap:6px; font-size:12px; color:var(--navy); margin-bottom:10px;}
+.check-line input{width:auto;}
+
+.poll-card{border:1px solid var(--line); border-radius:8px; padding:14px; margin-bottom:10px; background:var(--cream);}
+.poll-card .opt-row{display:flex; justify-content:space-between; font-size:12.5px; color:var(--text); max-width:340px; padding:2px 0;}
+.poll-card .poll-head{display:flex; justify-content:space-between; align-items:flex-start; gap:10px;}
+.poll-card .poll-actions{display:flex; gap:8px; margin-top:10px; flex-wrap:wrap;}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="loginView">
+  <div class="login-box">
+    <h1>Panel de Administración</h1>
+    <p class="mono">G2 Congresos — acceso interno</p>
+    <div class="field">
+      <label>Clave</label>
+      <input type="password" id="loginPass" placeholder="••••••••">
+    </div>
+    <button class="btn" style="width:100%;" onclick="doLogin()">Ingresar</button>
+    <p id="loginError" class="hint" style="color:var(--err);"></p>
+  </div>
+</div>
+
+<!-- PANEL -->
+<div id="panelView">
+  <header class="top">
+    <div>
+      <h1>G2 · Panel de Administración</h1>
+      <div class="sub" id="subtitle">congreso: —</div>
+    </div>
+    <div class="congreso-picker">
+      <select id="congresoSelect"></select>
+      <input type="text" id="nuevoCongresoId" placeholder="id-nuevo-congreso" class="mono" style="width:170px;padding:9px;border:1px solid var(--line);border-radius:7px;background:#fff;">
+      <button class="btn secondary small" onclick="crearCongreso()">+ Nuevo</button>
+      <button class="btn danger small" onclick="logout()">Salir</button>
+    </div>
+  </header>
+
+  <div class="card" style="display:flex; align-items:center; gap:14px; padding:14px 20px;">
+    <div style="flex:1; min-width:0;">
+      <div style="font-family:'IBM Plex Mono',monospace; font-size:10px; text-transform:uppercase; letter-spacing:.04em; color:var(--muted); margin-bottom:4px;">Link para participantes</div>
+      <div id="participantLink" class="mono" style="font-size:13px; color:var(--navy); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">—</div>
+    </div>
+    <button class="btn small" onclick="copiarLink()">Copiar link</button>
+  </div>
+
+  <div class="card">
+    <h2>Branding</h2>
+    <div class="grid2">
+      <div class="field"><label>Sigla</label><input id="f_sigla" placeholder="SAGG 2026"></div>
+      <div class="field"><label>Fechas</label><input id="f_fechas" placeholder="27 y 28 de agosto de 2026"></div>
+    </div>
+    <div class="field"><label>Nombre completo del congreso</label><input id="f_nombre" placeholder="XXII Congreso Argentino de..."></div>
+    <div class="field"><label>Sede</label><input id="f_sede" placeholder="Mar del Plata, Buenos Aires"></div>
+    <div class="field"><label>Logo principal (URL)</label><input id="f_logo" placeholder="https://.../logo-congreso.png"></div>
+    <div class="field">
+      <label>Logos de organizadores (uno por línea)</label>
+      <textarea id="f_logosOrg" placeholder="https://.../logo-iagg.png&#10;https://.../logo-sagg.png"></textarea>
+    </div>
+    <div class="field">
+      <label>Texto al pie de Inicio</label>
+      <input id="f_notaHome" placeholder="Contenido cargado en vivo desde el panel de administración.">
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Notificaciones</h2>
+    <div class="row-list" id="notifRows"></div>
+    <button class="btn secondary small" onclick="addNotifRow()">+ Agregar notificación</button>
+  </div>
+
+  <div class="card">
+    <h2>Información general</h2>
+    <div class="row-list" id="infoRows"></div>
+    <button class="btn secondary small" onclick="addInfoRow()">+ Agregar dato</button>
+  </div>
+
+  <div class="card">
+    <h2>Herramientas</h2>
+    <p class="hint">Son los botones que ven los asistentes en la pantalla principal. Los cambios se guardan con "Guardar cambios", al final de la página.</p>
+    <div id="herrRows"></div>
+    <button class="btn secondary small" onclick="addHerrRow()">+ Agregar herramienta</button>
+  </div>
+
+  <div class="card">
+    <h2>Encuestas</h2>
+    <p class="hint">Se muestran en los botones de tipo "Encuestas en vivo". Podés tener varias cargadas; solo las <b>activas</b> aparecen para los asistentes. Acá los cambios se guardan al instante.</p>
+    <div id="encuestasList"></div>
+    <div style="border-top:1px solid var(--line); margin-top:16px; padding-top:16px;">
+      <div class="field"><label>Nueva pregunta</label><input id="encNuevaPregunta" placeholder="¿Qué eje temático te interesa más?"></div>
+      <div id="encNuevasOpciones">
+        <div class="field"><input class="enc-nueva-opcion" placeholder="Opción 1"></div>
+        <div class="field"><input class="enc-nueva-opcion" placeholder="Opción 2"></div>
+      </div>
+      <div style="display:flex; gap:8px; flex-wrap:wrap;">
+        <button class="btn secondary small" onclick="addEncNuevaOpcion()">+ Agregar opción</button>
+        <button class="btn small" onclick="crearEncuesta()">Crear encuesta</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Listado de personas habilitadas (credencial digital)</h2>
+    <p class="hint">Subí un Excel (.xlsx) con columnas <b>DNI</b>, <b>Nombre</b>, <b>Categoria</b>, <b>Habilitado</b> (SI/NO). Reemplaza el listado completo cada vez que se sube.</p>
+    <input type="file" id="rosterFile" accept=".xlsx,.xls">
+    <button class="btn secondary small" style="margin-top:10px;" onclick="subirRoster()">Subir Excel</button>
+    <div style="margin-top:16px;">
+      <div class="roster-count" id="rosterCount"></div>
+      <table class="roster" id="rosterTable"></table>
+    </div>
+  </div>
+
+  <div class="actions-bar">
+    <button class="btn secondary" onclick="cargarCongreso(currentId)">Descartar cambios</button>
+    <button class="btn" onclick="guardarCongreso()">Guardar cambios</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+let token = localStorage.getItem("g2admin_token") || "";
+let currentId = null;
+
+function showToast(msg, isErr){
+  const t = document.getElementById("toast");
+  t.textContent = msg;
+  t.className = "toast show" + (isErr ? " err" : "");
+  setTimeout(() => t.classList.remove("show"), 3200);
+}
+
+function updateParticipantLink(id){
+  const url = `${location.origin}/?congreso=${encodeURIComponent(id)}`;
+  const el = document.getElementById("participantLink");
+  el.textContent = url;
+  el.dataset.url = url;
+}
+
+function copiarLink(){
+  const url = document.getElementById("participantLink").dataset.url;
+  if (!url) return;
+  navigator.clipboard.writeText(url)
+    .then(() => showToast("Link copiado"))
+    .catch(() => showToast("No se pudo copiar — copialo manualmente", true));
+}
+
+async function api(path, opts = {}){
+  const res = await fetch(path, {
+    ...opts,
+    headers: { ...(opts.headers || {}), Authorization: `Bearer ${token}` },
+  });
+  if (res.status === 401){ logout(); throw new Error("sesión vencida"); }
+  return res;
+}
+
+function logout(){
+  token = "";
+  localStorage.removeItem("g2admin_token");
+  document.getElementById("panelView").style.display = "none";
+  document.getElementById("loginView").style.display = "flex";
+}
+
+async function doLogin(){
+  const password = document.getElementById("loginPass").value;
+  const res = await fetch("/api/admin/login", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ password }),
+  });
+  if (!res.ok){
+    document.getElementById("loginError").textContent = "Clave incorrecta.";
+    return;
+  }
+  const data = await res.json();
+  token = data.token;
+  localStorage.setItem("g2admin_token", token);
+  iniciarPanel();
+}
+
+async function iniciarPanel(){
+  document.getElementById("loginView").style.display = "none";
+  document.getElementById("panelView").style.display = "block";
+  await refrescarListaCongresos();
+}
+
+async function refrescarListaCongresos(){
+  const res = await fetch("/api/congresos");
+  const ids = await res.json();
+  const sel = document.getElementById("congresoSelect");
+  sel.innerHTML = ids.map(id => `<option value="${id}">${id}</option>`).join("");
+  sel.onchange = () => cargarCongreso(sel.value);
+  if (ids.length){ sel.value = ids[0]; cargarCongreso(ids[0]); }
+}
+
+async function crearCongreso(){
+  const id = document.getElementById("nuevoCongresoId").value.trim();
+  if (!id) return showToast("Escribí un id para el nuevo congreso (ej: biociencias-2027)", true);
+  try {
+    await api(`/api/admin/congresos/${encodeURIComponent(id)}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ sigla: id, nombre: "Nuevo congreso", fechas: "", sede: "", herramientas: [], notificacionesDemo: [], info: [], roster: [] }),
+    });
+    document.getElementById("nuevoCongresoId").value = "";
+    await refrescarListaCongresos();
+    document.getElementById("congresoSelect").value = id;
+    cargarCongreso(id);
+    showToast("Congreso creado");
+  } catch (e) { showToast("Error al crear: " + e.message, true); }
+}
+
+async function cargarCongreso(id){
+  if (!id) return;
+  currentId = id;
+  document.getElementById("subtitle").textContent = "congreso: " + id;
+  updateParticipantLink(id);
+  try {
+    const res = await api(`/api/admin/congresos/${encodeURIComponent(id)}`);
+    if (!res.ok) throw new Error("no se pudo cargar");
+    const c = await res.json();
+    document.getElementById("f_sigla").value = c.sigla || "";
+    document.getElementById("f_nombre").value = c.nombre || "";
+    document.getElementById("f_fechas").value = c.fechas || "";
+    document.getElementById("f_sede").value = c.sede || "";
+    document.getElementById("f_logo").value = c.logo || "";
+    document.getElementById("f_logosOrg").value = (c.logosOrganizadores || []).join("\n");
+    document.getElementById("f_notaHome").value = c.notaHome || "";
+
+    renderNotifRows(c.notificacionesDemo || []);
+    renderInfoRows(c.info || []);
+    renderRoster(c.roster || []);
+    renderHerrRows(c.herramientas || []);
+    renderEncuestas(c.encuestas || []);
+  } catch (e) {
+    showToast("Error al cargar el congreso: " + e.message, true);
+  }
+}
+
+/* ---------- notificaciones ---------- */
+function renderNotifRows(list){
+  const box = document.getElementById("notifRows");
+  box.innerHTML = "";
+  list.forEach(n => addNotifRow(n));
+  if (!list.length) addNotifRow();
+}
+function addNotifRow(n){
+  n = n || { titulo: "", cuerpo: "", fecha: "" };
+  const div = document.createElement("div");
+  div.className = "row";
+  div.innerHTML = `
+    <input placeholder="Título" class="n-titulo" value="${escAttr(n.titulo)}">
+    <input placeholder="Cuerpo" class="n-cuerpo" value="${escAttr(n.cuerpo)}">
+    <input placeholder="27/8 · 10:00" class="n-fecha mono" style="max-width:120px;" value="${escAttr(n.fecha)}">
+    <button class="btn danger small" onclick="this.closest('.row').remove()">✕</button>`;
+  document.getElementById("notifRows").appendChild(div);
+}
+
+/* ---------- info ---------- */
+function renderInfoRows(list){
+  const box = document.getElementById("infoRows");
+  box.innerHTML = "";
+  list.forEach(r => addInfoRow(r));
+  if (!list.length) addInfoRow();
+}
+function addInfoRow(r){
+  r = r || { k: "", v: "", link: "" };
+  const div = document.createElement("div");
+  div.className = "row";
+  div.innerHTML = `
+    <input placeholder="Etiqueta (ej: Sede)" class="i-k mono" style="max-width:130px;" value="${escAttr(r.k)}">
+    <input placeholder="Valor" class="i-v" value="${escAttr(r.v)}">
+    <input placeholder="Link (opcional)" class="i-link mono" value="${escAttr(r.link || "")}">
+    <button class="btn danger small" onclick="this.closest('.row').remove()">✕</button>`;
+  document.getElementById("infoRows").appendChild(div);
+}
+
+function escAttr(s){ return String(s ?? "").replace(/"/g, "&quot;"); }
+
+/* ---------- herramientas (botones del home) ---------- */
+const HERR_ICONOS = [
+  ["idcard", "Credencial / QR"], ["doc", "Documento"], ["map", "Mapa / plano"],
+  ["bell", "Campana"], ["info", "Información"], ["chart", "Gráfico / encuesta"],
+  ["calendar", "Calendario"], ["pin", "Ubicación"], ["home", "Inicio"],
+];
+const HERR_MODOS = [
+  ["nativo", "Pantalla interna (notificaciones / info)"],
+  ["externo", "Link externo (abre en pestaña nueva)"],
+  ["embed", "Contenido embebido (se muestra dentro de la app)"],
+  ["imagen", "Imagen (ej: plano de salones)"],
+  ["credencial", "Credencial Digital (QR con validación de DNI)"],
+  ["nativo-overlay", "Encuestas en vivo"],
+];
+
+function renderHerrRows(list){
+  const box = document.getElementById("herrRows");
+  box.innerHTML = "";
+  list.forEach(t => addHerrRow(t));
+}
+
+function addHerrRow(t){
+  t = t || { id: "", icono: "doc", titulo: "", descripcion: "", modo: "nativo", target: "info", url: "", destacado: false };
+  const div = document.createElement("div");
+  div.className = "herr-row";
+  div.innerHTML = `
+    <div class="grid2">
+      <div class="field"><label>Título</label><input class="h-titulo" placeholder="Programa Científico" value="${escAttr(t.titulo)}"></div>
+      <div class="field"><label>Id interno (sin espacios)</label><input class="h-id mono" placeholder="programa" value="${escAttr(t.id)}"></div>
+    </div>
+    <div class="field"><label>Descripción</label><input class="h-desc" placeholder="Cronograma sincronizado en vivo" value="${escAttr(t.descripcion)}"></div>
+    <div class="grid2">
+      <div class="field"><label>Ícono</label><select class="h-icono">${HERR_ICONOS.map(([v, l]) => `<option value="${v}" ${t.icono === v ? "selected" : ""}>${l}</option>`).join("")}</select></div>
+      <div class="field"><label>Tipo</label><select class="h-modo" onchange="updateHerrRowFields(this)">${HERR_MODOS.map(([v, l]) => `<option value="${v}" ${t.modo === v ? "selected" : ""}>${l}</option>`).join("")}</select></div>
+    </div>
+    <div class="field h-field-target"><label>Pantalla</label>
+      <select class="h-target">
+        <option value="notif" ${t.target === "notif" ? "selected" : ""}>Notificaciones</option>
+        <option value="info" ${t.target === "info" ? "selected" : ""}>Información general</option>
+      </select>
+    </div>
+    <div class="field h-field-url"><label>URL</label><input class="h-url mono" placeholder="https://..." value="${escAttr(t.url || "")}"></div>
+    <label class="check-line"><input type="checkbox" class="h-destacado" ${t.destacado ? "checked" : ""}> Destacar este botón</label>
+    <div class="top-row"><button class="btn danger small" onclick="this.closest('.herr-row').remove()">Eliminar</button></div>`;
+  document.getElementById("herrRows").appendChild(div);
+  updateHerrRowFields(div.querySelector(".h-modo"));
+}
+
+function updateHerrRowFields(sel){
+  const row = sel.closest(".herr-row");
+  const modo = sel.value;
+  row.querySelector(".h-field-target").style.display = modo === "nativo" ? "" : "none";
+  row.querySelector(".h-field-url").style.display = (modo === "externo" || modo === "embed" || modo === "imagen") ? "" : "none";
+}
+
+/* ---------- encuestas ---------- */
+function renderEncuestas(list){
+  const box = document.getElementById("encuestasList");
+  if (!list.length){
+    box.innerHTML = `<p class="hint">Todavía no hay encuestas cargadas — creá la primera con el formulario de abajo.</p>`;
+    return;
+  }
+  box.innerHTML = list.map(e => {
+    const total = (e.opciones || []).reduce((s, o) => s + (o.votos || 0), 0);
+    return `
+      <div class="poll-card">
+        <div class="poll-head">
+          <div style="flex:1; min-width:0;">
+            <p style="font-weight:600; color:var(--navy); font-size:13px; margin-bottom:8px;">${e.pregunta}</p>
+            ${(e.opciones || []).map(o => `<div class="opt-row"><span>${o.texto}</span><span class="mono">${o.votos || 0}</span></div>`).join("")}
+            <p class="mono hint" style="margin-top:8px; margin-bottom:0;">${total} votos totales</p>
+          </div>
+          <label class="check-line" style="margin-bottom:0; white-space:nowrap;">
+            <input type="checkbox" ${e.activa ? "checked" : ""} onchange="toggleEncuesta('${e.id}', this.checked)"> Activa
+          </label>
+        </div>
+        <div class="poll-actions">
+          <button class="btn secondary small" onclick="resetEncuesta('${e.id}')">Reiniciar votos</button>
+          <button class="btn danger small" onclick="eliminarEncuesta('${e.id}')">Eliminar</button>
+        </div>
+      </div>`;
+  }).join("");
+}
+
+function addEncNuevaOpcion(){
+  const div = document.createElement("div");
+  div.className = "field";
+  div.innerHTML = `<input class="enc-nueva-opcion" placeholder="Opción">`;
+  document.getElementById("encNuevasOpciones").appendChild(div);
+}
+
+function limpiarFormEncuesta(){
+  document.getElementById("encNuevaPregunta").value = "";
+  document.getElementById("encNuevasOpciones").innerHTML = `
+    <div class="field"><input class="enc-nueva-opcion" placeholder="Opción 1"></div>
+    <div class="field"><input class="enc-nueva-opcion" placeholder="Opción 2"></div>`;
+}
+
+async function crearEncuesta(){
+  const pregunta = document.getElementById("encNuevaPregunta").value.trim();
+  const opciones = [...document.querySelectorAll(".enc-nueva-opcion")].map(i => i.value.trim()).filter(Boolean);
+  if (!pregunta) return showToast("Escribí la pregunta de la encuesta", true);
+  if (opciones.length < 2) return showToast("Agregá al menos 2 opciones", true);
+  try {
+    const res = await api(`/api/admin/congresos/${encodeURIComponent(currentId)}/encuestas`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ pregunta, opciones }),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || "error desconocido");
+    showToast("Encuesta creada");
+    limpiarFormEncuesta();
+    cargarCongreso(currentId);
+  } catch (e) { showToast("Error al crear la encuesta: " + e.message, true); }
+}
+
+async function toggleEncuesta(id, activa){
+  try {
+    const res = await api(`/api/admin/congresos/${encodeURIComponent(currentId)}/encuestas/${encodeURIComponent(id)}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ activa }),
+    });
+    if (!res.ok) throw new Error("no se pudo actualizar");
+    showToast(activa ? "Encuesta activada" : "Encuesta desactivada");
+    cargarCongreso(currentId);
+  } catch (e) { showToast("Error: " + e.message, true); }
+}
+
+async function resetEncuesta(id){
+  if (!confirm("¿Reiniciar los votos de esta encuesta a cero? No se puede deshacer.")) return;
+  try {
+    const res = await api(`/api/admin/congresos/${encodeURIComponent(currentId)}/encuestas/${encodeURIComponent(id)}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ reset: true }),
+    });
+    if (!res.ok) throw new Error("no se pudo reiniciar");
+    showToast("Votos reiniciados");
+    cargarCongreso(currentId);
+  } catch (e) { showToast("Error: " + e.message, true); }
+}
+
+async function eliminarEncuesta(id){
+  if (!confirm("¿Eliminar esta encuesta? No se puede deshacer.")) return;
+  try {
+    const res = await api(`/api/admin/congresos/${encodeURIComponent(currentId)}/encuestas/${encodeURIComponent(id)}`, { method: "DELETE" });
+    if (!res.ok) throw new Error("no se pudo eliminar");
+    showToast("Encuesta eliminada");
+    cargarCongreso(currentId);
+  } catch (e) { showToast("Error: " + e.message, true); }
+}
+
+/* ---------- roster ---------- */
+function renderRoster(list){
+  document.getElementById("rosterCount").textContent = `${list.length} personas cargadas`;
+  const table = document.getElementById("rosterTable");
+  if (!list.length){ table.innerHTML = ""; return; }
+  table.innerHTML = `
+    <tr><th>DNI</th><th>Nombre</th><th>Categoría</th><th>Estado</th></tr>
+    ${list.slice(0, 50).map(p => `
+      <tr>
+        <td class="mono">${p.dni}</td>
+        <td>${p.nombre}</td>
+        <td>${p.categoria}</td>
+        <td><span class="pill ${p.habilitado ? "ok" : "no"}">${p.habilitado ? "HABILITADO" : "PENDIENTE"}</span></td>
+      </tr>`).join("")}
+    ${list.length > 50 ? `<tr><td colspan="4" class="hint">…y ${list.length - 50} más</td></tr>` : ""}`;
+}
+
+async function subirRoster(){
+  const fileInput = document.getElementById("rosterFile");
+  if (!fileInput.files.length) return showToast("Elegí un archivo .xlsx primero", true);
+  const fd = new FormData();
+  fd.append("archivo", fileInput.files[0]);
+  try {
+    const res = await api(`/api/admin/congresos/${encodeURIComponent(currentId)}/roster`, { method: "POST", body: fd });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || "error desconocido");
+    showToast(`Listado actualizado: ${data.count} personas`);
+    cargarCongreso(currentId);
+  } catch (e) {
+    showToast("Error al subir el Excel: " + e.message, true);
+  }
+}
+
+/* ---------- guardar todo (branding + notif + info + herramientas) ---------- */
+async function guardarCongreso(){
+  const herramientas = [...document.querySelectorAll("#herrRows .herr-row")].map(row => {
+    const modo = row.querySelector(".h-modo").value;
+    const h = {
+      id: row.querySelector(".h-id").value.trim(),
+      icono: row.querySelector(".h-icono").value,
+      titulo: row.querySelector(".h-titulo").value.trim(),
+      descripcion: row.querySelector(".h-desc").value.trim(),
+      modo,
+      destacado: row.querySelector(".h-destacado").checked,
+    };
+    if (modo === "nativo") h.target = row.querySelector(".h-target").value;
+    if (modo === "externo" || modo === "embed" || modo === "imagen") h.url = row.querySelector(".h-url").value.trim();
+    return h;
+  }).filter(h => h.id && h.titulo);
+
+  const notificacionesDemo = [...document.querySelectorAll("#notifRows .row")].map(row => ({
+    titulo: row.querySelector(".n-titulo").value,
+    cuerpo: row.querySelector(".n-cuerpo").value,
+    fecha: row.querySelector(".n-fecha").value,
+  })).filter(n => n.titulo);
+
+  const info = [...document.querySelectorAll("#infoRows .row")].map(row => ({
+    k: row.querySelector(".i-k").value,
+    v: row.querySelector(".i-v").value,
+    link: row.querySelector(".i-link").value || undefined,
+  })).filter(r => r.k);
+
+  const payload = {
+    sigla: document.getElementById("f_sigla").value,
+    nombre: document.getElementById("f_nombre").value,
+    fechas: document.getElementById("f_fechas").value,
+    sede: document.getElementById("f_sede").value,
+    logo: document.getElementById("f_logo").value,
+    logosOrganizadores: document.getElementById("f_logosOrg").value.split("\n").map(s => s.trim()).filter(Boolean),
+    notaHome: document.getElementById("f_notaHome").value,
+    herramientas,
+    notificacionesDemo,
+    info,
+  };
+
+  try {
+    const res = await api(`/api/admin/congresos/${encodeURIComponent(currentId)}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    if (!res.ok) throw new Error("el servidor rechazó los cambios");
+    showToast("Cambios guardados ✓");
+  } catch (e) {
+    showToast("Error al guardar: " + e.message, true);
+  }
+}
+
+if (token) iniciarPanel();
+</script>
+</body>
+</html>
