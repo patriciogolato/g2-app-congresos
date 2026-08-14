@@ -131,6 +131,10 @@ table.roster td{padding:6px 8px; border-bottom:1px solid var(--cream2);}
       <label>Logos de organizadores (uno por línea)</label>
       <textarea id="f_logosOrg" placeholder="https://.../logo-iagg.png&#10;https://.../logo-sagg.png"></textarea>
     </div>
+    <div class="field">
+      <label>Texto al pie de Inicio</label>
+      <input id="f_notaHome" placeholder="Contenido cargado en vivo desde el panel de administración.">
+    </div>
   </div>
 
   <div class="card">
@@ -294,6 +298,7 @@ async function cargarCongreso(id){
     document.getElementById("f_sede").value = c.sede || "";
     document.getElementById("f_logo").value = c.logo || "";
     document.getElementById("f_logosOrg").value = (c.logosOrganizadores || []).join("\n");
+    document.getElementById("f_notaHome").value = c.notaHome || "";
 
     renderNotifRows(c.notificacionesDemo || []);
     renderInfoRows(c.info || []);
@@ -568,6 +573,7 @@ async function guardarCongreso(){
     sede: document.getElementById("f_sede").value,
     logo: document.getElementById("f_logo").value,
     logosOrganizadores: document.getElementById("f_logosOrg").value.split("\n").map(s => s.trim()).filter(Boolean),
+    notaHome: document.getElementById("f_notaHome").value,
     herramientas,
     notificacionesDemo,
     info,
