@@ -67,6 +67,16 @@ table.roster td{padding:6px 8px; border-bottom:1px solid var(--cream2);}
 .pill.no{background:var(--err-bg); color:var(--err);}
 
 .actions-bar{position:sticky; bottom:0; background:var(--cream2); padding:14px 0; margin-top:8px; display:flex; gap:10px; justify-content:flex-end; border-top:1px solid var(--line);}
+
+.herr-row{border:1px solid var(--line); border-radius:8px; padding:14px; margin-bottom:10px; background:var(--cream);}
+.herr-row .top-row{display:flex; justify-content:flex-end; margin-top:2px;}
+.check-line{display:flex; align-items:center; gap:6px; font-size:12px; color:var(--navy); margin-bottom:10px;}
+.check-line input{width:auto;}
+
+.poll-card{border:1px solid var(--line); border-radius:8px; padding:14px; margin-bottom:10px; background:var(--cream);}
+.poll-card .opt-row{display:flex; justify-content:space-between; font-size:12.5px; color:var(--text); max-width:340px; padding:2px 0;}
+.poll-card .poll-head{display:flex; justify-content:space-between; align-items:flex-start; gap:10px;}
+.poll-card .poll-actions{display:flex; gap:8px; margin-top:10px; flex-wrap:wrap;}
 </style>
 </head>
 <body>
@@ -136,9 +146,27 @@ table.roster td{padding:6px 8px; border-bottom:1px solid var(--cream2);}
   </div>
 
   <div class="card">
-    <h2>Herramientas (avanzado)</h2>
-    <p class="hint">Edición estructural en JSON — define qué botones aparecen en el home y a dónde apuntan (embed, link externo, imagen, credencial, etc).</p>
-    <div class="field"><textarea id="f_herramientas" style="min-height:220px;"></textarea></div>
+    <h2>Herramientas</h2>
+    <p class="hint">Son los botones que ven los asistentes en la pantalla principal. Los cambios se guardan con "Guardar cambios", al final de la página.</p>
+    <div id="herrRows"></div>
+    <button class="btn secondary small" onclick="addHerrRow()">+ Agregar herramienta</button>
+  </div>
+
+  <div class="card">
+    <h2>Encuestas</h2>
+    <p class="hint">Se muestran en los botones de tipo "Encuestas en vivo". Podés tener varias cargadas; solo las <b>activas</b> aparecen para los asistentes. Acá los cambios se guardan al instante.</p>
+    <div id="encuestasList"></div>
+    <div style="border-top:1px solid var(--line); margin-top:16px; padding-top:16px;">
+      <div class="field"><label>Nueva pregunta</label><input id="encNuevaPregunta" placeholder="¿Qué eje temático te interesa más?"></div>
+      <div id="encNuevasOpciones">
+        <div class="field"><input class="enc-nueva-opcion" placeholder="Opción 1"></div>
+        <div class="field"><input class="enc-nueva-opcion" placeholder="Opción 2"></div>
+      </div>
+      <div style="display:flex; gap:8px; flex-wrap:wrap;">
+        <button class="btn secondary small" onclick="addEncNuevaOpcion()">+ Agregar opción</button>
+        <button class="btn small" onclick="crearEncuesta()">Crear encuesta</button>
+      </div>
+    </div>
   </div>
 
   <div class="card">
@@ -266,11 +294,12 @@ async function cargarCongreso(id){
     document.getElementById("f_sede").value = c.sede || "";
     document.getElementById("f_logo").value = c.logo || "";
     document.getElementById("f_logosOrg").value = (c.logosOrganizadores || []).join("\n");
-    document.getElementById("f_herramientas").value = JSON.stringify(c.herramientas || [], null, 2);
 
     renderNotifRows(c.notificacionesDemo || []);
     renderInfoRows(c.info || []);
     renderRoster(c.roster || []);
+    renderHerrRows(c.herramientas || []);
+    renderEncuestas(c.encuestas || []);
   } catch (e) {
     showToast("Error al cargar el congreso: " + e.message, true);
   }
@@ -316,6 +345,160 @@ function addInfoRow(r){
 
 function escAttr(s){ return String(s ?? "").replace(/"/g, "&quot;"); }
 
+/* ---------- herramientas (botones del home) ---------- */
+const HERR_ICONOS = [
+  ["idcard", "Credencial / QR"], ["doc", "Documento"], ["map", "Mapa / plano"],
+  ["bell", "Campana"], ["info", "Información"], ["chart", "Gráfico / encuesta"],
+  ["calendar", "Calendario"], ["pin", "Ubicación"], ["home", "Inicio"],
+];
+const HERR_MODOS = [
+  ["nativo", "Pantalla interna (notificaciones / info)"],
+  ["externo", "Link externo (abre en pestaña nueva)"],
+  ["embed", "Contenido embebido (se muestra dentro de la app)"],
+  ["imagen", "Imagen (ej: plano de salones)"],
+  ["credencial", "Credencial Digital (QR con validación de DNI)"],
+  ["nativo-overlay", "Encuestas en vivo"],
+];
+
+function renderHerrRows(list){
+  const box = document.getElementById("herrRows");
+  box.innerHTML = "";
+  list.forEach(t => addHerrRow(t));
+}
+
+function addHerrRow(t){
+  t = t || { id: "", icono: "doc", titulo: "", descripcion: "", modo: "nativo", target: "info", url: "", destacado: false };
+  const div = document.createElement("div");
+  div.className = "herr-row";
+  div.innerHTML = `
+    <div class="grid2">
+      <div class="field"><label>Título</label><input class="h-titulo" placeholder="Programa Científico" value="${escAttr(t.titulo)}"></div>
+      <div class="field"><label>Id interno (sin espacios)</label><input class="h-id mono" placeholder="programa" value="${escAttr(t.id)}"></div>
+    </div>
+    <div class="field"><label>Descripción</label><input class="h-desc" placeholder="Cronograma sincronizado en vivo" value="${escAttr(t.descripcion)}"></div>
+    <div class="grid2">
+      <div class="field"><label>Ícono</label><select class="h-icono">${HERR_ICONOS.map(([v, l]) => `<option value="${v}" ${t.icono === v ? "selected" : ""}>${l}</option>`).join("")}</select></div>
+      <div class="field"><label>Tipo</label><select class="h-modo" onchange="updateHerrRowFields(this)">${HERR_MODOS.map(([v, l]) => `<option value="${v}" ${t.modo === v ? "selected" : ""}>${l}</option>`).join("")}</select></div>
+    </div>
+    <div class="field h-field-target"><label>Pantalla</label>
+      <select class="h-target">
+        <option value="notif" ${t.target === "notif" ? "selected" : ""}>Notificaciones</option>
+        <option value="info" ${t.target === "info" ? "selected" : ""}>Información general</option>
+      </select>
+    </div>
+    <div class="field h-field-url"><label>URL</label><input class="h-url mono" placeholder="https://..." value="${escAttr(t.url || "")}"></div>
+    <label class="check-line"><input type="checkbox" class="h-destacado" ${t.destacado ? "checked" : ""}> Destacar este botón</label>
+    <div class="top-row"><button class="btn danger small" onclick="this.closest('.herr-row').remove()">Eliminar</button></div>`;
+  document.getElementById("herrRows").appendChild(div);
+  updateHerrRowFields(div.querySelector(".h-modo"));
+}
+
+function updateHerrRowFields(sel){
+  const row = sel.closest(".herr-row");
+  const modo = sel.value;
+  row.querySelector(".h-field-target").style.display = modo === "nativo" ? "" : "none";
+  row.querySelector(".h-field-url").style.display = (modo === "externo" || modo === "embed" || modo === "imagen") ? "" : "none";
+}
+
+/* ---------- encuestas ---------- */
+function renderEncuestas(list){
+  const box = document.getElementById("encuestasList");
+  if (!list.length){
+    box.innerHTML = `<p class="hint">Todavía no hay encuestas cargadas — creá la primera con el formulario de abajo.</p>`;
+    return;
+  }
+  box.innerHTML = list.map(e => {
+    const total = (e.opciones || []).reduce((s, o) => s + (o.votos || 0), 0);
+    return `
+      <div class="poll-card">
+        <div class="poll-head">
+          <div style="flex:1; min-width:0;">
+            <p style="font-weight:600; color:var(--navy); font-size:13px; margin-bottom:8px;">${e.pregunta}</p>
+            ${(e.opciones || []).map(o => `<div class="opt-row"><span>${o.texto}</span><span class="mono">${o.votos || 0}</span></div>`).join("")}
+            <p class="mono hint" style="margin-top:8px; margin-bottom:0;">${total} votos totales</p>
+          </div>
+          <label class="check-line" style="margin-bottom:0; white-space:nowrap;">
+            <input type="checkbox" ${e.activa ? "checked" : ""} onchange="toggleEncuesta('${e.id}', this.checked)"> Activa
+          </label>
+        </div>
+        <div class="poll-actions">
+          <button class="btn secondary small" onclick="resetEncuesta('${e.id}')">Reiniciar votos</button>
+          <button class="btn danger small" onclick="eliminarEncuesta('${e.id}')">Eliminar</button>
+        </div>
+      </div>`;
+  }).join("");
+}
+
+function addEncNuevaOpcion(){
+  const div = document.createElement("div");
+  div.className = "field";
+  div.innerHTML = `<input class="enc-nueva-opcion" placeholder="Opción">`;
+  document.getElementById("encNuevasOpciones").appendChild(div);
+}
+
+function limpiarFormEncuesta(){
+  document.getElementById("encNuevaPregunta").value = "";
+  document.getElementById("encNuevasOpciones").innerHTML = `
+    <div class="field"><input class="enc-nueva-opcion" placeholder="Opción 1"></div>
+    <div class="field"><input class="enc-nueva-opcion" placeholder="Opción 2"></div>`;
+}
+
+async function crearEncuesta(){
+  const pregunta = document.getElementById("encNuevaPregunta").value.trim();
+  const opciones = [...document.querySelectorAll(".enc-nueva-opcion")].map(i => i.value.trim()).filter(Boolean);
+  if (!pregunta) return showToast("Escribí la pregunta de la encuesta", true);
+  if (opciones.length < 2) return showToast("Agregá al menos 2 opciones", true);
+  try {
+    const res = await api(`/api/admin/congresos/${encodeURIComponent(currentId)}/encuestas`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ pregunta, opciones }),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || "error desconocido");
+    showToast("Encuesta creada");
+    limpiarFormEncuesta();
+    cargarCongreso(currentId);
+  } catch (e) { showToast("Error al crear la encuesta: " + e.message, true); }
+}
+
+async function toggleEncuesta(id, activa){
+  try {
+    const res = await api(`/api/admin/congresos/${encodeURIComponent(currentId)}/encuestas/${encodeURIComponent(id)}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ activa }),
+    });
+    if (!res.ok) throw new Error("no se pudo actualizar");
+    showToast(activa ? "Encuesta activada" : "Encuesta desactivada");
+    cargarCongreso(currentId);
+  } catch (e) { showToast("Error: " + e.message, true); }
+}
+
+async function resetEncuesta(id){
+  if (!confirm("¿Reiniciar los votos de esta encuesta a cero? No se puede deshacer.")) return;
+  try {
+    const res = await api(`/api/admin/congresos/${encodeURIComponent(currentId)}/encuestas/${encodeURIComponent(id)}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ reset: true }),
+    });
+    if (!res.ok) throw new Error("no se pudo reiniciar");
+    showToast("Votos reiniciados");
+    cargarCongreso(currentId);
+  } catch (e) { showToast("Error: " + e.message, true); }
+}
+
+async function eliminarEncuesta(id){
+  if (!confirm("¿Eliminar esta encuesta? No se puede deshacer.")) return;
+  try {
+    const res = await api(`/api/admin/congresos/${encodeURIComponent(currentId)}/encuestas/${encodeURIComponent(id)}`, { method: "DELETE" });
+    if (!res.ok) throw new Error("no se pudo eliminar");
+    showToast("Encuesta eliminada");
+    cargarCongreso(currentId);
+  } catch (e) { showToast("Error: " + e.message, true); }
+}
+
 /* ---------- roster ---------- */
 function renderRoster(list){
   document.getElementById("rosterCount").textContent = `${list.length} personas cargadas`;
@@ -351,12 +534,20 @@ async function subirRoster(){
 
 /* ---------- guardar todo (branding + notif + info + herramientas) ---------- */
 async function guardarCongreso(){
-  let herramientas;
-  try {
-    herramientas = JSON.parse(document.getElementById("f_herramientas").value || "[]");
-  } catch (e){
-    return showToast("El JSON de herramientas tiene un error de sintaxis", true);
-  }
+  const herramientas = [...document.querySelectorAll("#herrRows .herr-row")].map(row => {
+    const modo = row.querySelector(".h-modo").value;
+    const h = {
+      id: row.querySelector(".h-id").value.trim(),
+      icono: row.querySelector(".h-icono").value,
+      titulo: row.querySelector(".h-titulo").value.trim(),
+      descripcion: row.querySelector(".h-desc").value.trim(),
+      modo,
+      destacado: row.querySelector(".h-destacado").checked,
+    };
+    if (modo === "nativo") h.target = row.querySelector(".h-target").value;
+    if (modo === "externo" || modo === "embed" || modo === "imagen") h.url = row.querySelector(".h-url").value.trim();
+    return h;
+  }).filter(h => h.id && h.titulo);
 
   const notificacionesDemo = [...document.querySelectorAll("#notifRows .row")].map(row => ({
     titulo: row.querySelector(".n-titulo").value,

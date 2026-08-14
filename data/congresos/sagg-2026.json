@@ -55,15 +55,19 @@
     { "k": "Web", "v": "www.g2consultora.com", "link": "https://www.g2consultora.com" },
     { "k": "Organiza", "v": "G2 Consultora" }
   ],
-  "encuestaDemo": {
-    "pregunta": "¿Qué eje temático te interesa más para el próximo congreso?",
-    "opciones": [
-      { "texto": "Fragilidad y autonomía", "votos": 38 },
-      { "texto": "Deterioro cognitivo", "votos": 27 },
-      { "texto": "Cuidados paliativos", "votos": 19 },
-      { "texto": "Políticas públicas de vejez", "votos": 11 }
-    ]
-  },
+  "encuestas": [
+    {
+      "id": "enc-sagg-demo1",
+      "pregunta": "¿Qué eje temático te interesa más para el próximo congreso?",
+      "activa": true,
+      "opciones": [
+        { "texto": "Fragilidad y autonomía", "votos": 38 },
+        { "texto": "Deterioro cognitivo", "votos": 27 },
+        { "texto": "Cuidados paliativos", "votos": 19 },
+        { "texto": "Políticas públicas de vejez", "votos": 11 }
+      ]
+    }
+  ],
   "roster": [
     { "dni": "30111222", "nombre": "María Fernández", "categoria": "Socio SAGG", "habilitado": true },
     { "dni": "28555444", "nombre": "Carlos Gómez", "categoria": "No Socio", "habilitado": true },

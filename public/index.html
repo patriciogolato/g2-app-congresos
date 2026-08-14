@@ -378,23 +378,27 @@ function clearOverlayContent(){
 }
 
 /* ============================================================
-   ENCUESTA (demo — resultados solo locales por ahora)
+   ENCUESTAS — en vivo, contra el backend. Puede haber varias
+   encuestas cargadas; solo se muestran las que están activas.
+   Cada voto se guarda en el servidor y el "ya voté" se recuerda
+   en este dispositivo (localStorage) para no votar dos veces.
    ============================================================ */
-let encuestaVotada = false;
-function renderEncuestaHTML(){
-  const op = CONFIG.encuestaDemo?.opciones || [];
-  const total = op.reduce((s, o) => s + o.votos, 0);
-  if (!encuestaVotada){
+function encuestaVotadaKey(encId){ return `g2_votado_${CONGRESO_ID}_${encId}`; }
+
+function renderEncuestaCard(enc){
+  const op = enc.opciones || [];
+  const total = op.reduce((s, o) => s + (o.votos || 0), 0);
+  const yaVoto = !!localStorage.getItem(encuestaVotadaKey(enc.id));
+  if (!yaVoto){
     return `
-      <div class="hero-card">
-        <h3 style="color:var(--navy);font-size:15px;margin-bottom:14px;">${CONFIG.encuestaDemo?.pregunta || ""}</h3>
-        ${op.map((o, i) => `<button class="btn-primary" style="margin-top:0;margin-bottom:8px;background:var(--white);color:var(--navy);border:1px solid var(--line);" onclick="votar(${i})">${o.texto}</button>`).join("")}
-      </div>
-      <div class="note-box">Encuesta en vivo: los resultados se actualizan en tiempo real para todos los asistentes conectados.</div>`;
+      <div class="hero-card" style="margin-bottom:14px;">
+        <h3 style="color:var(--navy);font-size:15px;margin-bottom:14px;">${enc.pregunta}</h3>
+        ${op.map((o, i) => `<button class="btn-primary" style="margin-top:0;margin-bottom:8px;background:var(--white);color:var(--navy);border:1px solid var(--line);" onclick="votarEncuesta('${enc.id}', ${i})">${o.texto}</button>`).join("")}
+      </div>`;
   }
   return `
-    <div class="hero-card">
-      <h3 style="color:var(--navy);font-size:15px;margin-bottom:14px;">${CONFIG.encuestaDemo?.pregunta || ""}</h3>
+    <div class="hero-card" style="margin-bottom:14px;">
+      <h3 style="color:var(--navy);font-size:15px;margin-bottom:14px;">${enc.pregunta}</h3>
       ${op.map(o => {
         const pct = total ? Math.round((o.votos / total) * 100) : 0;
         return `
@@ -410,11 +414,45 @@ function renderEncuestaHTML(){
       <p class="mono" style="font-size:10.5px;color:var(--muted);margin-top:4px;">${total} votos totales</p>
     </div>`;
 }
-function votar(i){
-  if (encuestaVotada) return;
-  CONFIG.encuestaDemo.opciones[i].votos++;
-  encuestaVotada = true;
-  openTool("encuestas");
+
+async function abrirEncuestas(wrap){
+  wrap.innerHTML = `<p class="mono" style="font-size:11px;color:var(--muted);text-align:center;padding:24px 0;">Cargando encuestas…</p>`;
+
+  // trae los datos más recientes (los votos cambian todo el tiempo)
+  try {
+    const res = await fetch(`/api/congresos/${encodeURIComponent(CONGRESO_ID)}`);
+    if (res.ok){
+      const fresh = await res.json();
+      CONFIG.encuestas = fresh.encuestas || [];
+    }
+  } catch (e) { /* si falla, seguimos con lo que ya teníamos cargado */ }
+
+  const activas = (CONFIG.encuestas || []).filter(e => e.activa);
+  if (!activas.length){
+    wrap.innerHTML = `<div class="note-box">No hay encuestas activas en este momento. Volvé a intentarlo más tarde.</div>`;
+    return;
+  }
+  wrap.innerHTML = activas.map(renderEncuestaCard).join("") +
+    `<div class="note-box">Encuesta en vivo: los resultados se actualizan en tiempo real para todos los asistentes conectados.</div>`;
+}
+
+async function votarEncuesta(encId, opcionIndex){
+  if (localStorage.getItem(encuestaVotadaKey(encId))) return;
+  try {
+    const res = await fetch(`/api/congresos/${encodeURIComponent(CONGRESO_ID)}/encuestas/${encodeURIComponent(encId)}/votar`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ opcionIndex }),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || "no se pudo votar");
+    localStorage.setItem(encuestaVotadaKey(encId), "1");
+    const idx = (CONFIG.encuestas || []).findIndex(e => e.id === encId);
+    if (idx > -1) CONFIG.encuestas[idx] = data.encuesta;
+    openTool("encuestas");
+  } catch (e) {
+    alert("No se pudo registrar tu voto. Probá de nuevo.");
+  }
 }
 
 /* ============================================================
@@ -510,9 +548,9 @@ function openTool(id){
     const wrap = document.createElement("div");
     wrap.className = "overlay-native";
     wrap.style.cssText = "flex:1;overflow-y:auto;padding:18px;background:var(--cream);";
-    if (id === "encuestas") wrap.innerHTML = renderEncuestaHTML();
     ov.appendChild(wrap);
     ov.classList.add("active");
+    abrirEncuestas(wrap); // por ahora el único tipo de overlay nativo son las encuestas
     return;
   }
 

@@ -89,6 +89,20 @@ app.get("/api/congresos/:id/roster/validar", (req, res) => {
   });
 });
 
+// votar una encuesta — público, no requiere token de admin
+app.post("/api/congresos/:id/encuestas/:encId/votar", (req, res) => {
+  const c = loadCongreso(req.params.id);
+  if (!c) return res.status(404).json({ error: "Congreso no encontrado" });
+  const enc = (c.encuestas || []).find((e) => e.id === req.params.encId);
+  if (!enc) return res.status(404).json({ error: "Encuesta no encontrada" });
+  if (!enc.activa) return res.status(400).json({ error: "Esta encuesta ya no está activa" });
+  const idx = Number(req.body?.opcionIndex);
+  if (!Number.isInteger(idx) || !enc.opciones[idx]) return res.status(400).json({ error: "Opción inválida" });
+  enc.opciones[idx].votos = (enc.opciones[idx].votos || 0) + 1;
+  saveCongreso(req.params.id, c);
+  res.json({ ok: true, encuesta: enc });
+});
+
 /* ============================================================
    API ADMIN (requiere token) — branding, herramientas, notificaciones, info
    ============================================================ */
@@ -134,6 +148,48 @@ app.post("/api/admin/congresos/:id/roster", auth, upload.single("archivo"), (req
   } catch (e) {
     res.status(400).json({ error: "No se pudo procesar el Excel: " + e.message });
   }
+});
+
+/* ---------- encuestas (admin: crear / activar / reiniciar / borrar) ---------- */
+app.post("/api/admin/congresos/:id/encuestas", auth, (req, res) => {
+  const { pregunta, opciones } = req.body || {};
+  const textoOpciones = Array.isArray(opciones) ? opciones.map((o) => String(o).trim()).filter(Boolean) : [];
+  if (!pregunta || !String(pregunta).trim()) return res.status(400).json({ error: "Falta la pregunta" });
+  if (textoOpciones.length < 2) return res.status(400).json({ error: "Agregá al menos 2 opciones" });
+
+  const c = loadCongreso(req.params.id) || { id: req.params.id };
+  const nueva = {
+    id: "enc-" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+    pregunta: String(pregunta).trim(),
+    opciones: textoOpciones.map((texto) => ({ texto, votos: 0 })),
+    activa: true,
+  };
+  c.encuestas = c.encuestas || [];
+  c.encuestas.push(nueva);
+  saveCongreso(req.params.id, c);
+  res.json({ ok: true, encuesta: nueva });
+});
+
+app.patch("/api/admin/congresos/:id/encuestas/:encId", auth, (req, res) => {
+  const c = loadCongreso(req.params.id);
+  if (!c) return res.status(404).json({ error: "Congreso no encontrado" });
+  const enc = (c.encuestas || []).find((e) => e.id === req.params.encId);
+  if (!enc) return res.status(404).json({ error: "Encuesta no encontrada" });
+
+  if (typeof req.body?.activa === "boolean") enc.activa = req.body.activa;
+  if (typeof req.body?.pregunta === "string" && req.body.pregunta.trim()) enc.pregunta = req.body.pregunta.trim();
+  if (req.body?.reset) enc.opciones.forEach((o) => (o.votos = 0));
+
+  saveCongreso(req.params.id, c);
+  res.json({ ok: true, encuesta: enc });
+});
+
+app.delete("/api/admin/congresos/:id/encuestas/:encId", auth, (req, res) => {
+  const c = loadCongreso(req.params.id);
+  if (!c) return res.status(404).json({ error: "Congreso no encontrado" });
+  c.encuestas = (c.encuestas || []).filter((e) => e.id !== req.params.encId);
+  saveCongreso(req.params.id, c);
+  res.json({ ok: true });
 });
 
 app.listen(PORT, () => {
