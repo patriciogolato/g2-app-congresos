@@ -1,6 +1,6 @@
 {
-  "name": "App Congresos G2 — Acreditación (SAGG 2026)",
-  "short_name": "G2 Acreditación",
+  "name": "App G2",
+  "short_name": "App G2",
   "description": "Credencial digital con QR, programa, plano de salones y notificaciones — sin login de EG2.",
   "start_url": "./index.html",
   "scope": "./",
