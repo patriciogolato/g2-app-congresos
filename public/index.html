@@ -330,7 +330,7 @@ function renderAll(){
   document.getElementById("topFechas").textContent = CONFIG.fechas || "";
   document.getElementById("topSede").textContent = CONFIG.sede || "";
   document.getElementById("orgLogos").innerHTML = (CONFIG.logosOrganizadores || []).map(u => `<img src="${u}" onerror="this.replaceWith(Object.assign(document.createElement('span'),{className:'logo-fallback mono',textContent:'LOGO'}))">`).join("");
-  document.getElementById("homeNote").textContent = `Contenido cargado en vivo desde el panel de administración — congreso: ${CONGRESO_ID}.`;
+  document.getElementById("homeNote").textContent = CONFIG.notaHome || `Contenido cargado en vivo desde el panel de administración — congreso: ${CONGRESO_ID}.`;
 
   document.getElementById("toolsGrid").innerHTML = (CONFIG.herramientas || []).map((t, i) => `
     <div class="tool-card ${t.destacado ? "featured" : ""}" onclick="openTool('${t.id}')">
